@@ -1,5 +1,18 @@
 {
     "files.associations": {
-        "token.h": "c"
+        "token.h": "c",
+        "vector": "cpp",
+        "xmemory": "cpp",
+        "xlocale": "c",
+        "xstring": "c",
+        "functional": "cpp",
+        "optional": "cpp",
+        "system_error": "cpp",
+        "type_traits": "cpp",
+        "xlocnum": "cpp",
+        "xtr1common": "cpp",
+        "assert.h": "c",
+        "stdio.h": "c",
+        "inttypes.h": "c"
     }
 }
