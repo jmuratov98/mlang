@@ -12,19 +12,17 @@ int main(int argc, char **argv) {
 }
 
 void test_tokenizer() {
-    printf("Testing Tokenizer\n");
-    token_t tokens[] = {
-        {.type = IF, .value = "if"},
-        {.type = LEFT_PAREN, .value = "("},
-        {.type = RIGHT_PAREN, .value = ")"},
-        {.type = MULT_ASSIGN, .value = "*="},
-        {.type = INT, .value = "int"}};
-    int length = sizeof(tokens) / sizeof(tokens[0]);
+    lexer_t lexer;
 
-    for (int i = 0; i < length; i++)
-    {
-        print_token(tokens + i); // Same thing as saying &tokens[i]
+    const char *source_code = "int i = a * (5 + c);";
+    lexer_init(&lexer, source_code);
+    lex(&lexer);
+    
+    for(int i = 0; i < vector_size(lexer.tokens); i++) {
+        print_token(&lexer.tokens[i]);
     }
+    
+    lexer_destroy(&lexer);
 }
 
 void test_vector() {
