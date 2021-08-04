@@ -5,16 +5,22 @@
 
 #include <stdio.h>
 
-typedef struct {
+
+// ======================== TOKENS ========================
+typedef struct token_t {
     token_type_e type;
     char *value;
     int line, char_index;
 } token_t;
 
+token_t *token_create(token_type_e type, char *value);
+void token_destroy(token_t *token);
+
+// ======================== LEXER ========================
 typedef struct {
     // I'm not all that sure if the symbol tree (tokens) should be part of the lexer.
     // Also, it would probably be better if it was a linked list rather than an array.
-    token_t *tokens; // Dynamically allocated array
+    token_t **tokens; // Dynamically allocated array
     const char *string;
     char current_char;
     int32 current_index;

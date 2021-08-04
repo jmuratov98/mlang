@@ -9,6 +9,13 @@ typedef enum {
     CLASS,
     STRUCTURE,
 
+    // Literal
+    INT_LITERAL,
+    FLOAT_LITERAL,
+    STRING_LITERAL,
+    TRUE,
+    FLASE,
+
     // Module Keywords
     IMPORT,
     EXPORT,
@@ -43,11 +50,17 @@ typedef enum {
     BIT_OR,
     BIT_XOR,
     BIT_NOT,
+    // TODO add more bitwise operators like shift left and right
 
     // Logic
     LOGIC_AND,
     LOGIC_OR,
     LOGIC_NOT,
+    DOUBLE_EQUAL,
+    GREATER,
+    GREATER_EQUAL,
+    LESS,
+    LESS_EQUAL,
 
     // BRACES
     LEFT_PAREN,
@@ -57,7 +70,20 @@ typedef enum {
     LEFT_CURLY_BRACKET,
     RIGHT_CURLY_BRACKET,
 
+    // Quotes
+    DOUBLE_QUOTE,
+    SINGLE_QUOTE,
+    BACK_TICK,
+
+    // Punctuation
+    COLON,
+    SEMICOLON,
+    DOT,
+    SKINNY_ARROW,
+    QUESTION,
+
     // Other
+    IDENTIFIER,
     UNKNOWN,
     END_OF_FILE,
 } token_type_e;

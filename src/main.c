@@ -14,12 +14,12 @@ int main(int argc, char **argv) {
 void test_tokenizer() {
     lexer_t lexer;
 
-    const char *source_code = "int i = a * (5 + c);";
+    const char *source_code = "int rand = a * (1234567890 + c); i += 2.0; j++";
     lexer_init(&lexer, source_code);
     lex(&lexer);
     
     for(int i = 0; i < vector_size(lexer.tokens); i++) {
-        print_token(&lexer.tokens[i]);
+        print_token(lexer.tokens[i]);
     }
     
     lexer_destroy(&lexer);
