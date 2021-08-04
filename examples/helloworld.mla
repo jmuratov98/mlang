@@ -1,0 +1,6 @@
+import printf from "stdio";
+
+int main ( int argc, char **argv ) {
+    printf( "hello, world" );
+    return 0;
+}

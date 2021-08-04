@@ -54,7 +54,7 @@ void token_destroy(token_t *token) {
     free(token);
 }
 
-void lexer_init(lexer_t *lexer, const char *string) {
+void lexer_init(lexer_t *lexer, char *string) {
     lexer->tokens = vector_create(token_t*);
     lexer->string = string;
     lexer->current_char = '\0';
@@ -66,6 +66,7 @@ void lexer_destroy(lexer_t *lexer) {
         token_destroy(lexer->tokens[i]);
     }
     vector_destroy(lexer->tokens);
+    free(lexer->string);
 }
 
 void lex(lexer_t *lexer) {
@@ -138,8 +139,11 @@ void lex(lexer_t *lexer) {
         else if(isalpha(c) || c == '_')
             get_reserved_tokens(lexer);
 
-        else
-            create_and_append_token(lexer, UNKNOWN, "");
+        else {
+            char value[2] = "";
+            value[0] = c;
+            create_and_append_token(lexer, UNKNOWN, value);
+        }
 
     } while(c != '\0');
 
