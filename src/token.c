@@ -9,27 +9,31 @@
 
 // TODO: Change this, make this into a map of sorts
 static const char *token_string[] = {
-    "INTEGER", "FLOAT", "BOOLEAN", "VOID", "CLASS", "STRUCT",
+    "INTEGER", "FLOAT", "BOOLEAN", "VOID", "CLASS", "STRUCT", "CHAR",
     "INT_LITERAL", "FLOAT_LITERAL", "STRING_LITERAL", "TRUE", "FALSE",
-    "IMPORT", "EXPORT",
+    "IMPORT", "EXPORT", "FROM",
     "IF", "ELSE", "SWITCH", "CASE", "DEFAULT", "BREAK", "CONTINUE", "RETURN",
     "ADD", "SUB", "MULT", "DIV", "MOD", "ASSIGN", "ADD_ASSIGN", "SUB_ASSIGN", "MULT_ASSIGN", "DIV_ASSIGN", "MOD_ASSIGN", "INC", "DEC",
     "BIT_AND", "BIT_OR", "BIT_XOR", "BIT_NOT",
     "LOGIC_AND", "LOGIC_OR", "LOGIC_NOT", "DOUBLE_EQUAL", "GREATER", "GREATER_EQUAL", "LESS", "LESS_EQUAL",
     "LEFT_PAREN", "RIGHT_PAREN", "LEFT_SQUARE_BRACKET", "RIGHT_SQUARE_BRACKET", "LEFT_CURLY_BRACKET", "RIGHT_CURLY_BRACKET",
     "DOUBLE_QUOTE", "SINGLE_QUOTE", "BACK_TICK",
-    "COLON", "SEMICOLON", "DOT", "SKINNY_ARROW", "QUESTION",
+    "COLON", "SEMICOLON", "DOT", "SKINNY_ARROW", "QUESTION", "COMMA",
     "IDENTIFIER", "UNKNOWN", "END_OF_FILE"
 };
 
 static bool has_more_tokens(lexer_t *lexer);
 
-static void get_next_char(lexer_t *lexer);
+static void advance_char(lexer_t *lexer);
+static void advance_nchar(lexer_t *lexer, int i);
 static char peek(lexer_t *lexer);
+static char peek_nth(lexer_t *lexer, int i);
 
 static char skip_whitespace(lexer_t *lexer);
-static void get_decimal(lexer_t *lexer);
-static void get_reserved_tokens(lexer_t *lexer);
+static void tokenize_operator(lexer_t *lexer, char c);
+static void tokenize_number(lexer_t *lexer, char c);
+static void tokenize_identifier(lexer_t *lexer, char c);
+static void tokenize_string(lexer_t *lexer, char c);
 
 static void create_and_append_token(lexer_t *lexer, token_type_e type, char *value);
 
@@ -54,6 +58,7 @@ void token_destroy(token_t *token) {
     free(token);
 }
 
+// Should this return a heap allocated lexer_t ?
 void lexer_init(lexer_t *lexer, char *string) {
     lexer->tokens = vector_create(token_t*);
     lexer->string = string;
@@ -72,7 +77,7 @@ void lexer_destroy(lexer_t *lexer) {
 void lex(lexer_t *lexer) {
     char c;
     do {
-        get_next_char(lexer);
+        advance_char(lexer);
         c = lexer->current_char;
 
         if(c == 0) {
@@ -83,62 +88,18 @@ void lex(lexer_t *lexer) {
         c = skip_whitespace(lexer);
         // TODO: Need to skip comments - // and /*  */
 
-        // "+", "-", "*", "/", "%", "=", "=="
-        // "(", ")", "{", "}"
-        // ">", ">=", "<", "<="
         // TODO: Refactor this
         if(is_operator(c)) {
-            char val[3] = "\0";
-            val[0] = c;
-
-            token_type_e type = UNKNOWN;
-
-            char next_char = peek(lexer);
-            if(next_char == '=') {
-                // +=, -=, *=, /=, %=
-                val[1] = next_char;
-                if(c == '+') type = ADD_ASSIGN;
-                if(c == '-') type = SUB_ASSIGN;
-                if(c == '*') type = MULT_ASSIGN;
-                if(c == '/') type = DIV_ASSIGN;
-                if(c == '%') type = MOD_ASSIGN;
-                if(c == '=') type = DOUBLE_EQUAL;
-                if(c == '>') type = GREATER_EQUAL;
-                if(c == '<') type = LESS_EQUAL;
-                get_next_char(lexer);
-
-            } else if(c == '+' && next_char == '+') {
-                // ++
-                val[1] = next_char;
-                type = INC;
-                get_next_char(lexer);
-            } else if(c == '-' && next_char == '-') {
-                // --
-                val[1] = next_char;
-                type = DEC;
-                get_next_char(lexer);
-            } else {
-                type = token_char_to_enum(c);
-            }
-            create_and_append_token(lexer, type, val);
+            tokenize_operator(lexer, c);
         }
-
-        // Integer or floating point literal
-        // /\d+/g           - decimal
-        // /0o[0-7]/        - octal
-        // /0x\d+[a-fA-F]   - hex
-        // TODO: Implement octal and hex literals
-        else if(isdigit(c))
-            get_decimal(lexer);
-
-        else if(c == '"' || c == '`') {
-            // String literal starts here
+        else if(isdigit(c)) {
+            tokenize_number(lexer, c);
         }
-
-        // All thats left to check is the type.
+        else if(c == '"' || c == '`' || c == '\'') {
+            tokenize_string(lexer, c);
+        }
         else if(isalpha(c) || c == '_')
-            get_reserved_tokens(lexer);
-
+            tokenize_identifier(lexer, c);
         else {
             char value[2] = "";
             value[0] = c;
@@ -158,9 +119,13 @@ bool has_more_tokens(lexer_t *lexer) {
     return lexer->current_index < (int64)strlen(lexer->string);
 }
 
-void get_next_char(lexer_t *lexer) {
+void advance_char(lexer_t *lexer) {
     lexer->current_char = lexer->string[lexer->current_index];
     lexer->current_index++;
+}
+
+void advance_nchar(lexer_t *lexer, int i) {
+    lexer->current_index += i;
 }
 
 char peek(lexer_t *lexer) {
@@ -169,42 +134,84 @@ char peek(lexer_t *lexer) {
     return '\0';
 }
 
+char peek_nth(lexer_t *lexer, int i) {
+    if( lexer->current_index + 1 < strlen(lexer->string))
+        return lexer->string[lexer->current_index + i];
+    return '\0';
+}
+
 char skip_whitespace(lexer_t *lexer) {
     char c = lexer->current_char;
     while(is_whitespace(c) == true) {
-        get_next_char(lexer);
+        advance_char(lexer);
         c = lexer->current_char;
     }
     return c;
 }
 
-void get_decimal(lexer_t *lexer) {
+void tokenize_operator(lexer_t *lexer, char c) {
+    char val[3] = "\0";
+    val[0] = c;
+        
+    token_type_e type = UNKNOWN;
+    char next_char = peek(lexer);
+    if(next_char == '=') {
+        // +=, -=, *=, /=, %=
+        val[1] = next_char;
+        switch(c) {
+            case '+': type = ADD_ASSIGN; break;
+            case '-': type = SUB_ASSIGN; break;
+            case '*': type = MULT_ASSIGN; break;
+            case '/': type = DIV_ASSIGN; break;
+            case '%': type = MOD_ASSIGN; break;
+            case '=': type = DOUBLE_EQUAL; break;
+            case '>': type = GREATER_EQUAL; break;
+            case '<': type = LESS_EQUAL; break;
+        }
+        advance_char(lexer);
+    } else if(c == '+' && next_char == '+') {
+        // ++
+        val[1] = next_char;
+        type = INC;
+        advance_char(lexer);
+    } else if(c == '-' && next_char == '-') {
+        // --
+        val[1] = next_char;
+        type = DEC;
+        advance_char(lexer);
+    } else {
+        type = token_char_to_enum(c);
+    }
+    create_and_append_token(lexer, type, val);
+}
+
+void tokenize_number(lexer_t *lexer, char c) {
     char *decimal = vector_create(char);
-    char c = lexer->current_char;
     token_type_e type = INT_LITERAL;
+    int i = 0;
 
     while(isdigit(c) || c == '.') {
         if(c == '.') type = FLOAT_LITERAL;
         vector_push_back(decimal, c);
 
-        get_next_char(lexer);
-        c = lexer->current_char;
+        c = peek_nth(lexer, i);
+        i++;
     }
 
-    vector_push_back(decimal, '\0');
+    advance_nchar(lexer, i - 1);
     create_and_append_token(lexer, type, decimal);
     vector_destroy(decimal);
 }
 
-void get_reserved_tokens(lexer_t *lexer) {
+void tokenize_identifier(lexer_t *lexer, char c) {
     char *token = vector_create(char);
-    char c = lexer->current_char;
     token_type_e type = UNKNOWN;
-    
+    int i = 0;
+
     while(isalnum(c) || c == '_') {
         vector_push_back(token, c);
-        get_next_char(lexer);
-        c = lexer->current_char;
+        c = peek_nth(lexer, i);
+        i++;
     }
 
     vector_push_back(token, '\0');
@@ -212,6 +219,26 @@ void get_reserved_tokens(lexer_t *lexer) {
 
     create_and_append_token(lexer, type, token);
     vector_destroy(token);
+    advance_nchar(lexer, i - 1);
+}
+
+void tokenize_string(lexer_t *lexer, char c) {
+    char delim = c;
+    char *str = vector_create(char);
+    token_type_e type = STRING_LITERAL;
+    int i = 0;
+    c = peek_nth(lexer, i++);
+
+    while(c != '"' && c != '`' && c != '\'') {
+        printf("c: %c, delim: %c\n", c, delim);
+        vector_push_back(str, c);
+        c = peek_nth(lexer, i++);
+        if(i == 20) break;
+    }
+
+    vector_push_back(str, '\0');
+    create_and_append_token(lexer, type, str);
+    advance_nchar(lexer, i);
 }
 
 void create_and_append_token(lexer_t *lexer, token_type_e type, char *value) { 
@@ -225,7 +252,8 @@ bool is_whitespace(char c) {
 
 bool is_operator(char c) {
     return (c == '+' || c == '-' || c == '*' || c == '/' || c == '%' || c == '=' ||
-            c == '(' || c == ')' || c == '{' || c == '}' || c == '[' || c == ']'    );
+            c == '(' || c == ')' || c == '{' || c == '}' || c == '[' || c == ']' ||
+            c == ':' || c == ';' || c == '.' || c == '?' || c == ','   );
 }
 
 token_type_e token_char_to_enum(char c) {
@@ -247,6 +275,12 @@ token_type_e token_char_to_enum(char c) {
         case '>': return GREATER;
         case '<': return LESS;
 
+        case ':': return COLON;
+        case ';': return SEMICOLON;
+        case '.': return DOT;
+        case '?': return QUESTION;
+        case ',': return COMMA;
+
         default:  return UNKNOWN;
     }
     return UNKNOWN;
@@ -260,6 +294,7 @@ token_type_e get_token_from_str(const char *str) {
     if(strcmp("void", str) == 0)     return VOID;
     if(strcmp("class", str) == 0)    return CLASS;
     if(strcmp("struct", str) == 0)   return STRUCTURE;
+    if(strcmp("char", str) == 0)     return CHAR;
     
     // boolean
     if(strcmp("true", str) == 0)     return TRUE;
@@ -268,6 +303,7 @@ token_type_e get_token_from_str(const char *str) {
     // Module
     if(strcmp("import", str) == 0)   return IMPORT;
     if(strcmp("export", str) == 0)   return EXPORT;
+    if(strcmp("from", str) == 0)    return FROM;
     
     // Conditional
     if(strcmp("if", str) == 0)       return IF;

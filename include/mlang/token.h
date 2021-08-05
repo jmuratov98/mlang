@@ -13,9 +13,24 @@ typedef struct token_t {
     int line, char_index;
 } token_t;
 
+/**
+ * @brief Creates a token on the heap
+ * 
+ * @param[in] type the token type
+ * @param[in] value the value of the token
+ * @return void
+ */ 
+
 token_t *token_create(token_type_e type, char *value);
 void token_destroy(token_t *token);
 
+/**
+ * @brief Prints a token
+ * 
+ * @param[in] token The token to print
+ * @return void
+ */ 
+void print_token(token_t *token);
 // ======================== LEXER ========================
 typedef struct {
     // I'm not all that sure if the symbol tree (tokens) should be part of the lexer.
@@ -49,6 +64,3 @@ void lexer_destroy(lexer_t *lexer);
  * @return void
  */
 void lex(lexer_t *lexer);
-
-// Debugging purposes
-void print_token(token_t *token);
