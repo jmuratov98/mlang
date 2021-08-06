@@ -8,6 +8,7 @@ typedef enum {
     VOID,
     CLASS,
     STRUCTURE,
+    CHAR,
 
     // Literal
     INT_LITERAL,
@@ -19,6 +20,7 @@ typedef enum {
     // Module Keywords
     IMPORT,
     EXPORT,
+    FROM,
 
     // Conditional Keywords
     IF,
@@ -81,6 +83,7 @@ typedef enum {
     DOT,
     SKINNY_ARROW,
     QUESTION,
+    COMMA,
 
     // Other
     IDENTIFIER,

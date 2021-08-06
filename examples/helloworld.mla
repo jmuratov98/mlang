@@ -1,6 +1,7 @@
 import printf from "stdio";
 
-int main ( int argc, char **argv ) {
-    printf( "hello, world" );
+int main(int argc, char **argv) {
+    float x = 3.14*2;
+    printf("hello, world");
     return 0;
 }

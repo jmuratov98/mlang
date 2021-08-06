@@ -1,6 +1,7 @@
 #include "mlang/containers/vector.h"
 
-#include <stdlib.h>
+#include "mlang/debug/mem.h"
+
 #include <string.h>
 #include <stdio.h>
 
@@ -13,7 +14,7 @@ void *_vector_create(uint64 capacity, uint64 stride) {
     uint64 array_size = capacity * stride;
     uint64 total_size = header_size + array_size;
 
-    uint64 *vector = malloc(total_size);
+    uint64 *vector = xmalloc(total_size);
     memset(vector, 0, total_size);
 
     vector[VECTOR_CAPACITY] = capacity;
@@ -24,7 +25,14 @@ void *_vector_create(uint64 capacity, uint64 stride) {
 
 void _vector_destroy(void *vector) {
     uint64 *block = (uint64 *)vector - VECTOR_ARRAY;
-    free(block);
+    uint64 cap = block[VECTOR_CAPACITY];
+    uint64 stride = block[VECTOR_STRIDE];
+
+    uint64 header_size = VECTOR_ARRAY * sizeof(uint64);
+    uint64 vector_size = cap * stride;
+    uint64 total_size = header_size + vector_size;
+    
+    xfree(block, total_size);
 }
 
 void* _vector_push_back(void *vector, void *value_ptr) {
