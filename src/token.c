@@ -2,7 +2,8 @@
 
 #include "mlang/containers/vector.h"
 
-#include <stdlib.h>
+#include "mlang/debug/mem.h"
+
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
@@ -44,9 +45,9 @@ static token_type_e token_char_to_enum(char c);
 static token_type_e get_token_from_str(const char *str);
 
 token_t *token_create(token_type_e type, char *value)  {
-    token_t *t = malloc(sizeof(token_t));
+    token_t *t = xmalloc(sizeof(token_t));
     t->type = type;
-    t->value = malloc((strlen(value) + 1) * sizeof(char));
+    t->value = xmalloc((strlen(value) + 1) * sizeof(char));
     memcpy(t->value, value, strlen(value));
     t->value[strlen(value)] = '\0';
 
@@ -54,8 +55,8 @@ token_t *token_create(token_type_e type, char *value)  {
 }
 
 void token_destroy(token_t *token) {
-    free(token->value);
-    free(token);
+    xfree(token->value, (strlen(token->value) + 1) * sizeof(char));
+    xfree(token, sizeof(token_t));
 }
 
 // Should this return a heap allocated lexer_t ?
@@ -71,7 +72,7 @@ void lexer_destroy(lexer_t *lexer) {
         token_destroy(lexer->tokens[i]);
     }
     vector_destroy(lexer->tokens);
-    free(lexer->string);
+    xfree(lexer->string, strlen(lexer->string));
 }
 
 void lex(lexer_t *lexer) {
@@ -229,8 +230,7 @@ void tokenize_string(lexer_t *lexer, char c) {
     int i = 0;
     c = peek_nth(lexer, i++);
 
-    while(c != '"' && c != '`' && c != '\'') {
-        printf("c: %c, delim: %c\n", c, delim);
+    while(c != delim) {
         vector_push_back(str, c);
         c = peek_nth(lexer, i++);
         if(i == 20) break;
@@ -239,6 +239,8 @@ void tokenize_string(lexer_t *lexer, char c) {
     vector_push_back(str, '\0');
     create_and_append_token(lexer, type, str);
     advance_nchar(lexer, i);
+
+    vector_destroy(str);
 }
 
 void create_and_append_token(lexer_t *lexer, token_type_e type, char *value) { 

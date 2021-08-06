@@ -10,7 +10,7 @@ MLANG_SOURCE_FILES	:= $(shell find ./${SRC}/ -name *.c)
 MLANG_HEADER_FILES	:= $(shell find ./${INCLUDE}/ -name *.h)
 MLANG_OBJECT_FILES	:= $(addprefix $(BINOBJ)/, $(patsubst %.c, %.o, $(notdir $(MLANG_SOURCE_FILES))))
 
-COMMON   	:= -Wall -Wformat=2 -march=native # -DNDEBUG
+COMMON   	:= -Wall -march=native # -DNDEBUG
 CFLAGS   	:= $(CFLAGS) $(COMMON)
 CXXFLAGS 	:= $(CXXFLAGS) $(COMMON)
 CC       	:= gcc

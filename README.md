@@ -18,9 +18,14 @@ make      # .o files will go to the ./bin-obj/ and the executable will be in ./b
 ```
 
 ## Features ##
-- [ ] Lexer
+- [x] Lexer
+    - [x] literal, reserved and operator lexing
 - [ ] Parser
 - [ ] Assembler
+
+### Don't know if I need
+- [ ] symbol tables
+- [ ] string tables
 
 ## Programming language features ##
 Nothing so far

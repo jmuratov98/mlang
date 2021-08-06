@@ -2,8 +2,9 @@
 
 #include "mlang/containers/vector.h"
 
+#include "mlang/debug/mem.h"
+
 #include <stdio.h>
-#include <stdlib.h>
 
 void stream_init(stream_t *stream, const char * path) {
     stream->path = path;
@@ -19,7 +20,7 @@ char *read_file(stream_t *stream) {
     fseek(fp, 0, SEEK_END);
     size_t length = ftell(fp);
     fseek(fp, 0, SEEK_SET);
-    char *buffer = malloc(length * sizeof(char));
+    char *buffer = xmalloc(length * sizeof(char));
 
     fread(buffer, sizeof(char), length, fp);
     buffer[length] = '\0';

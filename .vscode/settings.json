@@ -6,6 +6,7 @@
         "assert.h": "c",
         "stdio.h": "c",
         "inttypes.h": "c",
-        "cctype": "cpp"
+        "cctype": "cpp",
+        "mem.h": "c"
     }
 }
