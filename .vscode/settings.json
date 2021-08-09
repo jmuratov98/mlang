@@ -7,6 +7,7 @@
         "stdio.h": "c",
         "inttypes.h": "c",
         "cctype": "cpp",
-        "mem.h": "c"
+        "mem.h": "c",
+        "ast.h": "c"
     }
 }

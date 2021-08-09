@@ -11,6 +11,7 @@
     void _xfree(void *block, uint64 size, const char *file, int line, const char *func);
 
 #else
+    #include <stdlib.h> 
 
     #define xmalloc(size) malloc(size)
     #define xfree(block, size) free(block)

@@ -1,11 +1,16 @@
-#include "mlang/token.h"
 #include "mlang/stream.h"
+#include "mlang/token.h"
+#include "mlang/parser.h"
 
 #include "mlang/containers/vector.h"
+#include "mlang/containers/ast.h"
 
 void test_tokenizer();
 void test_vector();
 void test_stream_and_tokenizer(const char *input);
+void test_ast();
+void test_parser(const char *input);
+
 
 int main(int argc, char **argv) {
     if(argc < 2) {
@@ -15,8 +20,36 @@ int main(int argc, char **argv) {
 
     // test_vector();
     // test_tokenizer();
-    test_stream_and_tokenizer(argv[1]);
+    // test_stream_and_tokenizer(argv[1]);
+    // test_ast();
+    test_parser(argv[1]);
     return 0;
+}
+
+void test_parser(const char *input) {
+    stream_t stream;
+    lexer_t lexer;
+    parser_t parser;
+
+    stream_init(&stream, input);
+    char *source_code = read_file(&stream);
+
+    lexer_init(&lexer, source_code);
+    lex(&lexer);
+
+    parser_init(&parser);
+    parse(&parser, lexer.tokens);
+
+    parser_destroy(&parser);
+    lexer_destroy(&lexer);
+}
+
+void test_ast() {
+    node_t *root = create_node("root");
+    insert_node(&root, "hello");
+    insert_node(&root, "goodbye");
+
+    destroy_node(&root);
 }
 
 void test_stream_and_tokenizer(const char *input) {
