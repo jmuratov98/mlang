@@ -1,31 +1,19 @@
-#include "mlang/stream.h"
+#include "stream.h"
 
-#include "mlang/containers/vector.h"
-
-#include "mlang/debug/mem.h"
-
-#include <stdio.h>
-
-void stream_init(stream_t *stream, const char * path) {
-    stream->path = path;
+void stream_init(file_t* file, const char* filename) {
 }
 
-char *read_file(stream_t *stream) {
-    FILE *fp = fopen(stream->path, "rb");
-    if(!fp) {
-        perror("read_file:   Error opening file\n");
-        return NULL;
-    }
+void stream_deinit(file_t* file) {
+}
 
-    fseek(fp, 0, SEEK_END);
-    size_t length = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-    char *buffer = xmalloc(length * sizeof(char));
+void stream_get(file_t file) {
+}
 
-    fread(buffer, sizeof(char), length, fp);
-    buffer[length] = '\0';
+void stream_getn(file_t file, size_t n) {
+}
 
-    fclose(fp);
+char stream_peek(file_t file) {
+}
 
-    return buffer;
+char stream_peekn(file_t file, size_t n) {
 }

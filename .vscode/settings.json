@@ -8,6 +8,8 @@
         "inttypes.h": "c",
         "cctype": "cpp",
         "mem.h": "c",
-        "ast.h": "c"
-    }
+        "ast.h": "c",
+        "lexer.h": "c",
+        "stdlib.h": "c"
+    },
 }

@@ -1,24 +1,27 @@
-SRC		:= src
-INCLUDE	:= include/mlang
+CONFIG := debug
+ifeq ($(config), release)
+	CONFIG := release
+endif
 
-TESTS	:= mlang
+SRC		:= src
+INCLUDE		:= include/mlang
+
+TESTS		:= mlang
 
 BIN		:= bin
-BINOBJ	:= bin-obj
+BINOBJ		:= bin-obj
 
-MLANG_SOURCE_FILES	:= $(shell find ./${SRC}/ -name *.c)
+MLANG_SOURCE_FILES	:= $(shell find ./${SRC}/ -name *.cpp)
 MLANG_HEADER_FILES	:= $(shell find ./${INCLUDE}/ -name *.h)
-MLANG_OBJECT_FILES	:= $(addprefix $(BINOBJ)/, $(patsubst %.c, %.o, $(notdir $(MLANG_SOURCE_FILES))))
+MLANG_OBJECT_FILES	:= $(addprefix $(BINOBJ)/, $(patsubst %.cpp, %.o, $(notdir $(MLANG_SOURCE_FILES))))
 
-COMMON   	:= -Wall -march=native # -DNDEBUG
+COMMON   	:= -Wall -std=C++17 -march=native # -DNDEBUG
 CFLAGS   	:= $(CFLAGS) $(COMMON)
-CXXFLAGS 	:= $(CXXFLAGS) $(COMMON)
-CC       	:= gcc
-CXX      	:= g++
+CC       	:= clang++
 LD       	:= $(CC)
 LDFLAGS  	:= $(LDFLAGS)  # -L/path/to/libs/
 LDADD    	:=  # -lrt
-INCLUDE  	:= -Iinclude # -I../path/to/headers/
+INCLUDE  	:= -Isrc # -I../path/to/headers/
 DEFS     	:=  # -DLINUX
 
 TARGET := $(BIN)/mlang.exe
@@ -26,34 +29,34 @@ TARGET := $(BIN)/mlang.exe
 
 all: $(TARGET)
 
-# {{{ for debugging
-DBGFLAGS := -g
-DBGDEFS := -DMLANG_DEBUG
-debug : CFLAGS += $(DBGFLAGS)
-debug : CXXFLAGS += $(DBGFLAGS)
-debug : DEFS += $(DBGDEFS)
-debug : all
-.PHONY : debug
-# }}}
+ifeq ($(CONFIG), debug)
+CFLAGS += -O0 -g
+DEFS += -DMLANG_DEBUG
+endif
+ifeq ($(CONFIG), release)
+	RLSFLAGS := -O2
+	RLSDEFS := -DMLANG_RELEASE
+	CFLAGS += $(RLSFLAGS)
+	CXXFLAGS += $(RLSFLAGS)
+	DEFS += $(RLSDEFS)
+endif
 
-# {{{ for release
-RLSFLAGS := -O2
-RLSDEFS := -DMLANG_RELEASE
-release : CFLAGS += $(RLSFLAGS)
-release : CXXFLAGS += $(RLSFLAGS)
-release : DEFS += $(RLSDEFS)
-release : all
-.PHONY : release
-# }}}
-
-$(TARGET) : $(MLANG_OBJECT_FILES)
+$(TARGET) : $(MLANG_OBJECT_FILES) 
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDADD)
 
-$(BINOBJ)/%.o : $(SRC)/%.c $(MLANG_HEADER_FILES)
-	$(CC) $(DEFS) $(INCLUDE) $(CXXFLAGS) -c $< -o $@
+$(BINOBJ)/%.o : $(SRC)/%.cpp $(MLANG_HEADER_FILES) init
+	$(CC) $(DEFS) $(INCLUDE) $(CFLAGS) -c $< -o $@
 
-.PHONY : init clean
+.PHONY : init clean help
 init:
-	mkdir ./bin/ ./bin-obj/
-clean :
+	mkdir -p ./bin/ ./bin-obj/
+
+clean:
 	rm -rf ./bin/* ./bin-obj/*
+
+help:
+	@echo "usage make config=[config]"
+	@echo ""
+	@echo "config:"
+	@echo "        debug:                Builds debug build (default)"
+	@echo "        release:              Builds release build"
